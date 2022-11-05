@@ -8,6 +8,7 @@ import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.raji.todoapp.R
 import com.raji.todoapp.databinding.FragmentTasksBinding
@@ -16,6 +17,8 @@ import com.raji.todoapp.ui.SortOrder
 import com.raji.todoapp.ui.TaskListAdapter
 import com.raji.todoapp.ui.TasksViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TaskListFragment : Fragment(R.layout.fragment_tasks) {
@@ -54,21 +57,25 @@ class TaskListFragment : Fragment(R.layout.fragment_tasks) {
             taskListViewModel.searchQuery.value = it
 
         }
+
+        viewLifecycleOwner.lifecycleScope.launch{
+            menu.findItem(R.id.action_hide_completed_tasks).isChecked = taskListViewModel.preferenceFlow.first().hideCompleted
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_sort_by_name -> {
-                taskListViewModel.sortOrder.value = SortOrder.BY_NAME
+                taskListViewModel.onSortSelected(SortOrder.BY_NAME)
                 true
             }
             R.id.action_sort_by_date_created -> {
-                taskListViewModel.sortOrder.value = SortOrder.BY_DATE
+                taskListViewModel.onSortSelected(SortOrder.BY_DATE)
                 true
             }
             R.id.action_hide_completed_tasks -> {
                 item.isChecked = !item.isChecked
-                taskListViewModel.hideCompleted.value = item.isChecked
+                taskListViewModel.onHideCompleteClicked(item.isChecked)
                 true
             }
             R.id.action_delete_all_completed_tasks -> {
