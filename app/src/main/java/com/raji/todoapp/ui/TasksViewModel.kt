@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.raji.todoapp.data.PreferenceManager
+import com.raji.todoapp.data.Task
 import com.raji.todoapp.data.TaskDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +42,19 @@ class TasksViewModel @Inject constructor(
     fun onHideCompleteClicked(hideCompleted: Boolean) = viewModelScope.launch {
         preferenceManager.updateHideCompleted(hideCompleted)
     }
+
+    fun onTaskSelected(task: Task) {
+
+    }
+
+    fun onTaskCheckedChanged(task: Task, checked: Boolean) = viewModelScope.launch {
+        taskDao.update(
+            task.copy(
+                completed = checked
+            )
+        )
+    }
+
 
     val tasks = tasksFlow.asLiveData()
 

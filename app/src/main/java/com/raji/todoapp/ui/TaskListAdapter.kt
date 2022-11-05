@@ -9,7 +9,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.raji.todoapp.data.Task
 import com.raji.todoapp.databinding.ItemTaskBinding
 
-class TaskListAdapter : ListAdapter<Task, TaskListAdapter.TasksViewHolder>(DiffCallback()) {
+class TaskListAdapter(private val listener: OnItemClickListener) :
+    ListAdapter<Task, TaskListAdapter.TasksViewHolder>(DiffCallback()) {
+
+    interface OnItemClickListener {
+        fun onItemClick(task: Task)
+        fun onCheckBoxClick(task: Task, isChecked: Boolean)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TasksViewHolder {
         val binding = ItemTaskBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -21,8 +27,27 @@ class TaskListAdapter : ListAdapter<Task, TaskListAdapter.TasksViewHolder>(DiffC
         holder.bind(currentItem)
     }
 
-    class TasksViewHolder(private val binding: ItemTaskBinding) :
+    inner class TasksViewHolder(private val binding: ItemTaskBinding) :
         RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.apply {
+                root.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val task = getItem(position)
+                        listener.onItemClick(task)
+                    }
+                }
+                checkBoxCompleted.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val task = getItem(position)
+                        listener.onCheckBoxClick(task, checkBoxCompleted.isChecked)
+                    }
+                }
+            }
+        }
 
         fun bind(task: Task) {
             binding.apply {
