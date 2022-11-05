@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.raji.todoapp.data.PreferenceManager.PreferencesKey.HIDE_COMPLETED
 import com.raji.todoapp.data.PreferenceManager.PreferencesKey.SORT_ORDER
-import com.raji.todoapp.ui.SortOrder
+import com.raji.todoapp.ui.viewmodel.SortOrder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

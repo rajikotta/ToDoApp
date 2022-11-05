@@ -1,36 +1,31 @@
-package com.raji.todoapp.ui
+package com.raji.todoapp.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.raji.todoapp.data.PreferenceManager
 import com.raji.todoapp.data.Task
 import com.raji.todoapp.data.TaskDao
-import com.raji.todoapp.ui.TaskEvent.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val taskDao: TaskDao,
-    private val preferenceManager: PreferenceManager
+    private val preferenceManager: PreferenceManager,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val searchQuery = MutableStateFlow("")
+    val searchQuery = savedStateHandle.getLiveData("search_query","")
 
     val preferenceFlow = preferenceManager.preferenceFlow
 
     private val taskEventChannel = Channel<TaskEvent>()
-    val taskEvent = taskEventChannel.consumeAsFlow()
+    val taskEvent: Flow<TaskEvent> = taskEventChannel.receiveAsFlow()
 
     private val tasksFlow =
-        combine(searchQuery, preferenceFlow) { query, preferences ->
+        combine(searchQuery.asFlow(), preferenceFlow) { query, preferences ->
             Pair(query, preferences)
         }.flatMapLatest { (sortOrder, filterPreferences) ->
             taskDao.getTasks(
@@ -48,10 +43,6 @@ class TasksViewModel @Inject constructor(
         preferenceManager.updateHideCompleted(hideCompleted)
     }
 
-    fun onTaskSelected(task: Task) {
-
-    }
-
     fun onTaskCheckedChanged(task: Task, checked: Boolean) = viewModelScope.launch {
         taskDao.update(
             task.copy(
@@ -62,11 +53,22 @@ class TasksViewModel @Inject constructor(
 
     fun onTaskSwiped(task: Task) = viewModelScope.launch {
         taskDao.delete(task)
-        taskEventChannel.send(ShowUndoDeleteTaskMessage(task))
+        taskEventChannel.send(TaskEvent.ShowUndoDeleteTaskMessage(task))
     }
 
     fun undoDeletedTask(task: Task) = viewModelScope.launch {
         taskDao.insert(task)
+    }
+
+
+    fun onTaskSelected(task: Task) = viewModelScope.launch {
+
+        taskEventChannel.send(TaskEvent.NavigateToEditTaskScreen(task))
+
+    }
+
+    fun onAddNewTaskClick() = viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.NavigateToAddTaskScreen)
     }
 
 
@@ -81,4 +83,6 @@ enum class SortOrder {
 
 sealed class TaskEvent {
     data class ShowUndoDeleteTaskMessage(val task: Task) : TaskEvent()
+    object NavigateToAddTaskScreen : TaskEvent()
+    data class NavigateToEditTaskScreen(val task: Task) : TaskEvent()
 }

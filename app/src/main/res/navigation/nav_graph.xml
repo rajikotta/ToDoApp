@@ -1,11 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/taskListFragment">
 
     <fragment
         android:id="@+id/taskListFragment"
         android:name="com.raji.todoapp.ui.fragment.TaskListFragment"
-        android:label="TaskListFragment" />
+        android:label="Task List">
+        <action
+            android:id="@+id/action_taskListFragment_to_addEditFragment"
+            app:destination="@id/addEditFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addEditFragment"
+        android:name="com.raji.todoapp.ui.fragment.AddEditFragment"
+        android:label="{title}"
+        tools:layout="@layout/fragment_add_edit">
+        <argument
+            android:name="task"
+            android:defaultValue="@null"
+            app:argType="com.raji.todoapp.data.Task"
+            app:nullable="true" />
+        <argument
+            android:name="title"
+            app:argType="string" />
+    </fragment>
 </navigation>

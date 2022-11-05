@@ -1,7 +1,7 @@
 package com.raji.todoapp.data
 
 import androidx.room.*
-import com.raji.todoapp.ui.SortOrder
+import com.raji.todoapp.ui.viewmodel.SortOrder
 import kotlinx.coroutines.flow.Flow
 
 @Dao
