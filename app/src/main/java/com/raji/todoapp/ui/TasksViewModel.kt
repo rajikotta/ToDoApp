@@ -6,9 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.raji.todoapp.data.PreferenceManager
 import com.raji.todoapp.data.Task
 import com.raji.todoapp.data.TaskDao
+import com.raji.todoapp.ui.TaskEvent.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,6 +26,8 @@ class TasksViewModel @Inject constructor(
 
     val preferenceFlow = preferenceManager.preferenceFlow
 
+    private val taskEventChannel = Channel<TaskEvent>()
+    val taskEvent = taskEventChannel.consumeAsFlow()
 
     private val tasksFlow =
         combine(searchQuery, preferenceFlow) { query, preferences ->
@@ -55,6 +60,15 @@ class TasksViewModel @Inject constructor(
         )
     }
 
+    fun onTaskSwiped(task: Task) = viewModelScope.launch {
+        taskDao.delete(task)
+        taskEventChannel.send(ShowUndoDeleteTaskMessage(task))
+    }
+
+    fun undoDeletedTask(task: Task) = viewModelScope.launch {
+        taskDao.insert(task)
+    }
+
 
     val tasks = tasksFlow.asLiveData()
 
@@ -62,4 +76,9 @@ class TasksViewModel @Inject constructor(
 
 enum class SortOrder {
     BY_NAME, BY_DATE
+}
+
+
+sealed class TaskEvent {
+    data class ShowUndoDeleteTaskMessage(val task: Task) : TaskEvent()
 }
