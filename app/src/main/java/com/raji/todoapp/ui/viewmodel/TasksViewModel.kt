@@ -1,6 +1,8 @@
 package com.raji.todoapp.ui.viewmodel
 
 import androidx.lifecycle.*
+import com.raji.todoapp.ADD_TASK_RESULT_OK
+import com.raji.todoapp.EDIT_TASK_RESULT_OK
 import com.raji.todoapp.data.PreferenceManager
 import com.raji.todoapp.data.Task
 import com.raji.todoapp.data.TaskDao
@@ -17,7 +19,7 @@ class TasksViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val searchQuery = savedStateHandle.getLiveData("search_query","")
+    val searchQuery = savedStateHandle.getLiveData("search_query", "")
 
     val preferenceFlow = preferenceManager.preferenceFlow
 
@@ -71,6 +73,16 @@ class TasksViewModel @Inject constructor(
         taskEventChannel.send(TaskEvent.NavigateToAddTaskScreen)
     }
 
+    fun onAddEditResult(result: Int) {
+        when (result) {
+            ADD_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task added")
+            EDIT_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task updated")
+        }
+    }
+
+    private fun showTaskSavedConfirmationMessage(text: String) = viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.ShowTaskSavedConfirmationMessage(text))
+    }
 
     val tasks = tasksFlow.asLiveData()
 
@@ -85,4 +97,6 @@ sealed class TaskEvent {
     data class ShowUndoDeleteTaskMessage(val task: Task) : TaskEvent()
     object NavigateToAddTaskScreen : TaskEvent()
     data class NavigateToEditTaskScreen(val task: Task) : TaskEvent()
+    data class ShowTaskSavedConfirmationMessage(val msg: String) : TaskEvent()
+
 }
