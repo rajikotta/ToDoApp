@@ -7,11 +7,9 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.whenStarted
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,6 +30,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class TaskListFragment : Fragment(R.layout.fragment_tasks), TaskListAdapter.OnItemClickListener {
 
+    lateinit var searchView: SearchView
     private val taskListViewModel by viewModels<TasksViewModel>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -114,6 +113,11 @@ class TaskListFragment : Fragment(R.layout.fragment_tasks), TaskListAdapter.OnIt
                     is TaskEvent.ShowTaskSavedConfirmationMessage -> {
                         Snackbar.make(requireView(), taskevent.msg, Snackbar.LENGTH_SHORT).show()
                     }
+                    TaskEvent.NavigateToDeleteAllCompletedScreen -> {
+                        val action =
+                            TaskListFragmentDirections.actionGlobalDeleteAllCompletedDialogFragment()
+                        findNavController().navigate(action)
+                    }
                 }
             }
         }
@@ -129,10 +133,17 @@ class TaskListFragment : Fragment(R.layout.fragment_tasks), TaskListAdapter.OnIt
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.menu, menu)
 
-        val searchView = menu.findItem(R.id.action_search).actionView as SearchView
+        val searchItem = menu.findItem(R.id.action_search)
+        searchView = searchItem.actionView as SearchView
+
+        val pendingQuery = taskListViewModel.searchQuery.value
+        if (pendingQuery != null && pendingQuery.isNotEmpty()) {
+            searchItem.expandActionView()
+            searchView.setQuery(pendingQuery, false)
+        }
+
         searchView.onQuerySubmit {
             taskListViewModel.searchQuery.value = it
-
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -157,6 +168,7 @@ class TaskListFragment : Fragment(R.layout.fragment_tasks), TaskListAdapter.OnIt
                 true
             }
             R.id.action_delete_all_completed_tasks -> {
+                taskListViewModel.onDeleteAllCompletedClick()
 
                 true
             }
@@ -173,4 +185,9 @@ class TaskListFragment : Fragment(R.layout.fragment_tasks), TaskListAdapter.OnIt
         taskListViewModel.onTaskCheckedChanged(task, isChecked)
     }
 
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        searchView.setOnQueryTextListener(null)
+    }
 }

@@ -84,6 +84,11 @@ class TasksViewModel @Inject constructor(
         taskEventChannel.send(TaskEvent.ShowTaskSavedConfirmationMessage(text))
     }
 
+
+    fun onDeleteAllCompletedClick() = viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.NavigateToDeleteAllCompletedScreen)
+    }
+
     val tasks = tasksFlow.asLiveData()
 
 }
@@ -98,5 +103,7 @@ sealed class TaskEvent {
     object NavigateToAddTaskScreen : TaskEvent()
     data class NavigateToEditTaskScreen(val task: Task) : TaskEvent()
     data class ShowTaskSavedConfirmationMessage(val msg: String) : TaskEvent()
+    object NavigateToDeleteAllCompletedScreen : TaskEvent()
+
 
 }
